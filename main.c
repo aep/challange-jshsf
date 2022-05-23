@@ -29,7 +29,7 @@ void serve(int *fd) {
         }
     }
 
-    write(*fd, response, sizeof(response));
+    send(*fd, response, strlen(response), 0);
     close(*fd);
 }
 
