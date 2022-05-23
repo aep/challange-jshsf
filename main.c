@@ -9,7 +9,8 @@
 #include <err.h>
 #include <string.h>
 
-char response[] = "Content-Type: text/html; charset=UTF-8\r\n\r\n"
+char response[] = "HTTP/1.1 200 OK\r\n"
+"Content-Type: text/html; charset=UTF-8\r\n\r\n"
 "<!DOCTYPE html><html><head><title>Bye-bye baby bye-bye</title>"
 "<style>body { background-color: #111 }"
 "h1 { font-size:4cm; text-align: center; color: black;"
@@ -22,13 +23,14 @@ void serve(int *fd) {
     printf("got connection\n");
 
     for (;;) {
-        read(fd, b, strlen(b));
-        if (strstr(b, "\r\n\r\n")) {
+        int bytes_read = read(*fd, b, strlen(b));
+        if (strstr(b, "\r\n\r\n") || bytes_read <= 0) {
             break;
         }
     }
 
-    write(fd, response, sizeof(response));
+    write(*fd, response, sizeof(response));
+    close(*fd);
 }
 
 int main()
@@ -42,7 +44,7 @@ int main()
     }
 
     int one = 1;
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, one, sizeof(int));
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 
     int port = 8080;
     svr_addr.sin_family = AF_INET;
@@ -57,7 +59,7 @@ int main()
     listen(sock, 5);
     while (1) {
         int fd = accept(sock, (struct sockaddr *) &cli_addr, &sin_len);
-        serve(fd);
+        serve(&fd);
     }
 }
 
